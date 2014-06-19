@@ -114,10 +114,10 @@ class ArmoredCar():
         screen.blit(self.image, (self.position[0] * 30, self.position[1] * 30))
 
     def is_legal(self, new_area):
-        for point in new_area:
-            if point[0] < 0 or point[1] < 0 or point[0] >= x_max or point[1] >= y_max:
+        for (x, y) in new_area:
+            if x < 0 or y < 0 or x >= x_max or y >= y_max:
                 return False
-            if battle_field[point[1]][point[0]] != 0:
+            if battle_field[y][x] != 0:
                 return False
 
         for enemy in enemys:
