@@ -121,11 +121,12 @@ class ArmoredCar():
                 return False
 
         for enemy in enemys:
-            if isinstance(self, Enemy) and enemy == self:
+            if enemy == self:
                 continue
-            return not area_conflict(enemy.area, new_area)
-        if isinstance(self, Enemy):
-            return not area_conflict(self.area, tank.area)
+            if area_conflict(enemy.area, new_area):
+                return False
+        if isinstance(self, Enemy) and area_conflict(self.area, tank.area):
+            return False
 
         return True
 
