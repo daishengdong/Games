@@ -18,15 +18,19 @@ class Block():
         self.bricks_layout = p_bricks_layout
         self.direction = p_direction
         self.cur_layout = self.bricks_layout[self.direction]
-        self.position = init_position
+        self.position = cur_block_init_position
         self.stopped = False
-        self.move_interval = 1000
+        self.move_interval = 800
         self.last_move = -1
         self.bricks = []
         for (x, y) in self.cur_layout:
             self.bricks.append(Brick(
                 (self.position[0] + x, self.position[1] + y),
                 p_color))
+
+    def setPosition(self, position):
+        self.position = position
+        self.refresh_bircks()
 
     def draw(self):
         for brick in self.bricks:
@@ -66,6 +70,7 @@ class Block():
 
     def stop(self):
         global field_bricks
+        global score
         self.stopped = True
         ys = []
         for brick in self.bricks:
@@ -93,6 +98,14 @@ class Block():
                 elif fy > y:
                     tmp_field_bricks.append(fb)
             field_bricks = tmp_field_bricks
+        if eliminate_count == 1:
+            score += 1
+        elif eliminate_count == 2:
+            score += 2
+        elif eliminate_count == 3:
+            score += 4
+        elif eliminate_count == 4:
+            score += 6
             '''
             attention: the code below does not work
             index = 0
@@ -133,26 +146,35 @@ def drawField():
     for brick in field_bricks:
         brick.draw()
 
+def drawInfoPanel():
+    font = pygame.font.Font("resources/fonts/MONACO.TTF", 18)
+    survivedtext = font.render('score: ' + str(score), True, (255, 255, 255))
+    textRect = survivedtext.get_rect()
+    textRect.topleft = ((field_width + 2) * brick_width, 10)
+    screen.blit(survivedtext, textRect)
+
+    next_block.draw()
+
+def drawFrame():
+    frame_color = pygame.Color(200, 200, 200)
+    pygame.draw.line(screen, frame_color, (field_width * brick_width, field_height * brick_height), (field_width * brick_width, 0), 3)
+
 def getBlock():
     block_type = random.randint(0, 6)
     if block_type == 0:
-        ret_block = Block(bricks_layout_0, random.randint(0, len(bricks_layout_0) - 1), colors_for_bricks[0])
+        return Block(bricks_layout_0, random.randint(0, len(bricks_layout_0) - 1), colors_for_bricks[0])
     elif block_type == 1:
-        ret_block = Block(bricks_layout_1, random.randint(0, len(bricks_layout_1) - 1), colors_for_bricks[1])
+        return Block(bricks_layout_1, random.randint(0, len(bricks_layout_1) - 1), colors_for_bricks[1])
     elif block_type == 2:
-        ret_block = Block(bricks_layout_2, random.randint(0, len(bricks_layout_2) - 1), colors_for_bricks[2])
+        return Block(bricks_layout_2, random.randint(0, len(bricks_layout_2) - 1), colors_for_bricks[2])
     elif block_type == 3:
-        ret_block = Block(bricks_layout_3, random.randint(0, len(bricks_layout_3) - 1), colors_for_bricks[3])
+        return Block(bricks_layout_3, random.randint(0, len(bricks_layout_3) - 1), colors_for_bricks[3])
     elif block_type == 4:
-        ret_block = Block(bricks_layout_4, random.randint(0, len(bricks_layout_4) - 1), colors_for_bricks[4])
+        return Block(bricks_layout_4, random.randint(0, len(bricks_layout_4) - 1), colors_for_bricks[4])
     elif block_type == 5:
-        ret_block = Block(bricks_layout_5, random.randint(0, len(bricks_layout_5) - 1), colors_for_bricks[5])
+        return Block(bricks_layout_5, random.randint(0, len(bricks_layout_5) - 1), colors_for_bricks[5])
     elif block_type == 6:
-        ret_block = Block(bricks_layout_6, random.randint(0, len(bricks_layout_6) - 1), colors_for_bricks[6])
-    if ret_block.isLegal(ret_block.cur_layout, ret_block.position):
-        return True, ret_block
-    else:
-        return False, ret_block
+        return Block(bricks_layout_6, random.randint(0, len(bricks_layout_6) - 1), colors_for_bricks[6])
 
 # 0: oooo
 # 1: oo
@@ -207,34 +229,45 @@ colors_for_bricks = (
         pygame.Color(100, 100, 100), pygame.Color(120, 200, 0), pygame.Color(100, 0, 200),
         pygame.Color(10, 100, 30))
 
-field_width = 8
-field_height = 8
-init_position = [3, 0]
-# field_width = 12
-# field_height = 17
-# init_position = [4, 0]
-score = 0
-brick_width = 30
-brick_height = 30
+field_width = 12
+field_height = 17
+cur_block_init_position = (4, 0)
+info_panel_width = 8
+next_block_init_position = (field_width + 3, 5)
 field_map = [[0 for i in xrange(field_width)] for i in xrange(field_height)]
-field_bricks = []
 
-pygame.init()
-screen = pygame.display.set_mode((field_width * brick_width, field_height * brick_height), 0, 32)
 game_over_img = pygame.image.load("resources/images/game_over.gif")
 
 running = True
+score = 0
+brick_width = 30
+brick_height = 30
+field_bricks = []
+
+pygame.init()
+screen = pygame.display.set_mode(((field_width + info_panel_width) * brick_width, field_height * brick_height), 0, 32)
+
+next_block = None
 while running:
-    success, block = getBlock()
-    if not success:
-        block.draw()
+    if next_block == None:
+        cur_block = getBlock()
+    else:
+        cur_block = next_block
+        cur_block.setPosition(cur_block_init_position)
+    next_block = getBlock()
+    next_block.setPosition(next_block_init_position)
+
+    if not cur_block.isLegal(cur_block.cur_layout, cur_block.position):
+        cur_block.draw()
         running = False
         continue
-    while not block.stopped:
+    while not cur_block.stopped:
         screen.fill(0)
+        drawFrame()
         time = pygame.time.get_ticks()
-        block.update(time)
+        cur_block.update(time)
         drawField()
+        drawInfoPanel()
 
         pygame.display.flip()
         pygame.display.update()
@@ -244,16 +277,17 @@ while running:
                 exit(0)
             if event.type == pygame.KEYDOWN:
                 if event.key == K_w or event.key == K_UP:
-                    block.rotate()
-                    block.last_move = time
+                    cur_block.rotate()
+                    cur_block.last_move = time
                 elif event.key == K_a or event.key == K_LEFT:
-                    block.left()
+                    cur_block.left()
                 elif event.key == K_d or event.key == K_RIGHT:
-                    block.right()
+                    cur_block.right()
                 elif event.key == K_s or event.key == K_DOWN:
-                    block.down()
+                    cur_block.down()
+                    cur_block.last_move = time - 500
 
-screen.blit(game_over_img, (30, 30))
+screen.blit(game_over_img, (field_width / 2 * brick_width, (field_height / 2 - 2) * brick_height))
 
 while True:
     for event in pygame.event.get():
