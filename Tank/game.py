@@ -7,8 +7,7 @@ def expand_battle_field():
     for row in small_battle_field:
         new_row = []
         for column in row:
-            new_row.append(column)
-            new_row.append(column)
+            new_row.extend([column] * 2)
         battle_field.append(new_row)
         battle_field.append(new_row[:])
 
