@@ -4,15 +4,11 @@ import math
 import random
 
 class Brick():
-    brick = Brick()
     def __init__(self, p_position, p_color):
         self.position = p_position
         self.color = p_color
-        self.image = pygame.Surface([self.width, self.height])
+        self.image = pygame.Surface([brick_width, brick_height])
         self.image.fill(self.color)
-
-    def getBrick(self):
-        return brick
     
     def draw(self):
         screen.blit(self.image, (self.position[0] * brick_width, self.position[1] * brick_height))
@@ -23,6 +19,9 @@ class Block():
         self.direction = p_direction
         self.cur_layout = self.bricks_layout[self.direction]
         self.position = init_position
+        self.stopped = False
+        self.move_interval = 1000
+        self.last_move = -1
         self.bricks = []
         for (x, y) in self.cur_layout:
             self.bricks.append(Brick(
@@ -33,21 +32,63 @@ class Block():
         for brick in self.bricks:
             brick.draw()
 
-    def rotate_clockwise(self):
-        self.direction += 1
-        if self.direction >= len(self.bricks_layout):
-            self.direction = 0
-        self.cur_layout = self.bricks_layout[p_direction]
-        for (brick, (x, y)) in zip(self,bricks, self.cur_layout):
+    def isLegal(self, layout, position):
+        (x0, y0) = position
+        for (x, y) in layout:
+            if x + x0 < 0 or y + y0 < 0 or x + x0 >= field_width or y + y0 >= field_height:
+                return False
+            if field_map[y + y0][x + x0] != 0:
+                return False
+        return True
+
+    def left(self):
+        self.refresh_bircks()
+        new_position = (self.position[0] - 1, self.position[1])
+
+    def right(self):
+        self.refresh_bircks()
+        new_position = (self.position[0] + 1, self.position[1])
+
+    def down(self):
+        self.refresh_bircks()
+        pass
+
+    def refresh_bircks(self):
+        for (brick, (x, y)) in zip(self.bricks, self.cur_layout):
             brick.position = (self.position[0] + x, self.position[1] + y)
 
+    def stop(self):
+        self.stopped = True
+        for brick in self.bricks:
+            field_bricks.append(brick)
+
+    def update(self, time):
+        if self.last_move == -1 or time - self.last_move >= self.move_interval:
+            new_position = (self.position[0], self.position[1] + 1)
+            if isLegal(cur.layout, new_position):
+                self.position = new_position
+                self.refresh_bircks()
+                self.last_move = time
+            else:
+                self.stop()
+
+    def rotate(self):
+        new_direction = self.direction + 1
+        if new_direction >= len(self.bricks_layout):
+            new_direction = 0
+        new_layout = self.bricks_layout[new_direction]
+        if not isLegal(new_layout):
+            return
+        self.direction = new_direction
+        self.cur_layout = new_layout
+        for (brick, (x, y)) in zip(self.bricks, self.cur_layout):
+            brick.position = (self.position[0] + x, self.position[1] + y)
+        self.refresh_bircks()
+        self.draw()
+
 def drawField():
-    for row in field:
-        for (b_type, color) in row:
-            if b_type == 1:
-            image = pygame.Surface([brick_width, brick_height])
-            image.fill(color)
-            screen.blit(self.image, (x * brick_width, y * brick_height))
+    for brick in field_bricks:
+        brick.draw()
 
 def getBlock(block_type):
     # block_type = random.randint(0, 6)
@@ -83,19 +124,19 @@ def getBlock(block_type):
 #      o
 bricks_layout_0 = (
         ((1, 0), (1, 1), (1, 2), (1, 3)),
-        ((0, 1), (1, 1), (2, 1), (2, 1)))
+        ((0, 1), (1, 1), (2, 1), (3, 1)))
 bricks_layout_1 = (
-        ((0, 0), (1, 0), (1, 1), (1, 0))
+        ((1, 0), (2, 0), (1, 1), (2, 1)),
         )
 bricks_layout_2 = (
         ((1, 0), (0, 1), (1, 1), (2, 1)),
         ((0, 1), (1, 0), (1, 1), (1, 2)),
         ((1, 2), (0, 1), (1, 1), (2, 1)),
-        ((2, 1), (0, 1), (1, 1), (1, 2)),
+        ((2, 1), (1, 0), (1, 1), (1, 2)),
         )
 bricks_layout_3 = (
         ((0, 1), (1, 1), (1, 0), (2, 0)),
-        ((1, 0), (1, 1), (2, 1), (2, 2)),
+        ((0, 0), (0, 1), (1, 1), (1, 2)),
         )
 bricks_layout_4 = (
         ((0, 0), (1, 0), (1, 1), (2, 1)),
@@ -111,29 +152,35 @@ bricks_layout_6 = (
         ((2, 0), (1, 0), (1, 1), (1, 2)),
         ((0, 0), (0, 1), (1, 1), (2, 1)),
         ((0, 2), (1, 2), (1, 1), (1, 0)),
-        ((2, 2), (2, 1), (1, 1), (2, 1)),
+        ((2, 2), (2, 1), (1, 1), (0, 1)),
         )
 
 colors_for_bricks = (
         pygame.Color(255, 0, 0), pygame.Color(0, 255, 0), pygame.Color(0, 0, 255),
-        pygame.Color(100, 100, 100), pygame.Color(120, 200, 0), pygame.Color(100, 0, 200))
+        pygame.Color(100, 100, 100), pygame.Color(120, 200, 0), pygame.Color(100, 0, 200),
+        pygame.Color(10, 100, 30))
 
 field_width = 15
 field_height = 20
 brick_width = 30
 brick_height = 30
-field = [[[0, pygame.Color(0, 0, 0)] for i in xrange(field_width)] for i in xrange(field_height)]
-init_position = [5, 0]
+field_map = [[0 for i in xrange(field_width)] for i in xrange(field_height)]
+field_bricks = []
+init_position = [6, 0]
 
 pygame.init()
 screen = pygame.display.set_mode((field_width * brick_width, field_height * brick_height), 0, 32)
 
 running = True
 game_over = False
+screen.fill(0)
+block = getBlock(6)
 
 while running:
+    screen.fill(0)
+    time = pygame.time.get_ticks()
+    block.update(time)
     drawField()
-    block = getBlock(5)
     block.draw()
 
     pygame.display.flip()
@@ -144,13 +191,13 @@ while running:
             exit(0)
         if event.type == pygame.KEYDOWN:
             if event.key == K_w or event.key == K_UP:
-                block.rotate_clockwise()
+                block.rotate()
             elif event.key == K_a or event.key == K_LEFT:
-                pass
-            elif event.key == K_s or event.key == K_DOWN:
-                pass
+                block.left()
             elif event.key == K_d or event.key == K_RIGHT:
-                pass
+                block.right()
+            elif event.key == K_s or event.key == K_DOWN:
+                block.down()
 
 while True:
     for event in pygame.event.get():
