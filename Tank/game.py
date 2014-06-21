@@ -13,9 +13,8 @@ def expand_battle_field():
 
 def area_conflict(area1, area2):
     for point1 in area1:
-        for point2 in area2:
-            if point1 == point2:
-                return True
+        if point1 in area2:
+            return True
     return False
 
 def draw_battle_field():
@@ -52,22 +51,16 @@ def produce_enemy(time):
     index_e = random.randint(0, 1)
     conflict = False
     for point in tank.area:
-        for point_e in enemy_init_area[index_e]:
-            if point == point_e:
-                conflict = True
-                break
-        if conflict:
-            break;
+        if point in enemy_init_area[index_e]:
+            conflict = True
+            break
 
     if not conflict:
         for enemy in enemys:
             for point_e in enemy.area:
-                for point in enemy_init_area[index_e]:
-                    if point_e == point:
-                        conflict = True
-                        break
-                if conflict:
-                    break;
+                if point_e in enemy_init_area[index_e]:
+                    onflict = True
+                    break
             if conflict:
                 break;
 
@@ -78,15 +71,13 @@ def produce_enemy(time):
         return
 
     for point in tank.area:
-        for point_e in enemy_init_area[1 - index_e]:
-            if point == point_e:
-                return
+        if point in enemy_init_area[1 - index_e]:
+            return
 
     for enemy in enemys:
         for point_e in enemy.area:
-            for point in enemy_init_area[1 - index_e]:
-                if point_e == point:
-                    return
+            if point_e in enemy_init_area[1 - index_e]:
+                return
 
     enemys.append(Enemy(enemy_init_position[1 - index_e]))
     last_product = time
