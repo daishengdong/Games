@@ -230,8 +230,7 @@ colors_for_bricks = (
         pygame.Color(100, 100, 100), pygame.Color(120, 200, 0), pygame.Color(100, 0, 200),
         pygame.Color(10, 100, 30))
 
-field_width = 12
-field_height = 17
+field_width, field_height = 12, 17
 cur_block_init_position = (4, 0)
 info_panel_width = 8
 next_block_init_position = (field_width + 3, 5)
@@ -241,8 +240,7 @@ game_over_img = pygame.image.load("resources/images/game_over.gif")
 
 running = True
 score = 0
-brick_width = 30
-brick_height = 30
+brick_width, brick_height = 30, 30
 field_bricks = []
 
 next_block = None
