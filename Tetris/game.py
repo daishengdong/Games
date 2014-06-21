@@ -21,7 +21,6 @@ class Block():
         self.position = cur_block_init_position
         self.stopped = False
         self.move_interval = 800
-        self.last_move = -1
         self.bricks = []
         for (x, y) in self.cur_layout:
             self.bricks.append(Brick(
@@ -81,6 +80,7 @@ class Block():
             field_map[y][x] = 1
 
         eliminate_count = 0
+        ys.sort()
         for y in ys:
             if 0 in field_map[y]:
                 continue
@@ -118,13 +118,14 @@ class Block():
                 '''
 
     def update(self, time):
+        global last_move
         self.draw()
-        if self.last_move == -1 or time - self.last_move >= self.move_interval:
+        if last_move == -1 or time - last_move >= self.move_interval:
             new_position = (self.position[0], self.position[1] + 1)
             if self.isLegal(self.cur_layout, new_position):
                 self.position = new_position
                 self.refresh_bircks()
-                self.last_move = time
+                last_move = time
             else:
                 self.stop()
 
@@ -244,10 +245,12 @@ brick_width = 30
 brick_height = 30
 field_bricks = []
 
+next_block = None
+last_move = -1
+
 pygame.init()
 screen = pygame.display.set_mode(((field_width + info_panel_width) * brick_width, field_height * brick_height), 0, 32)
 
-next_block = None
 while running:
     if next_block == None:
         cur_block = getBlock()
@@ -278,14 +281,14 @@ while running:
             if event.type == pygame.KEYDOWN:
                 if event.key == K_w or event.key == K_UP:
                     cur_block.rotate()
-                    cur_block.last_move = time
+                    last_move = time
                 elif event.key == K_a or event.key == K_LEFT:
                     cur_block.left()
                 elif event.key == K_d or event.key == K_RIGHT:
                     cur_block.right()
                 elif event.key == K_s or event.key == K_DOWN:
                     cur_block.down()
-                    cur_block.last_move = time - 500
+                    last_move = time - 500
 
 screen.blit(game_over_img, (field_width / 2 * brick_width, (field_height / 2 - 2) * brick_height))
 
