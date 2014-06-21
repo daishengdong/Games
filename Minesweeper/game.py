@@ -170,60 +170,59 @@ def drawNumber(number, time):
     screen.blit(number_blocks[time1], (118, 20))
     screen.blit(number_blocks[time2], (131, 20))
 
-if __name__ == "__main__":
-    pygame.init()
-    width, height = 164, 217 
-    screen = pygame.display.set_mode((width, height))
-    white_color = pygame.Color(255, 255, 255)
+pygame.init()
+width, height = 164, 217 
+screen = pygame.display.set_mode((width, height))
+white_color = pygame.Color(255, 255, 255)
 
-    # blocks[i = 0 : 8]: i mines arround
-    # blocks[9]: blank block
-    # blocks[10]: mine, marked correctly
-    # blocks[11]: mine, marked falsely
-    # blocks[12]: mine, blow up
-    # blocks[13]: flag
-    # blocks[14]: wonder
-    block_names = [os.path.join("resources", "images", str(x) + ".bmp") for x in xrange(15)]
-    blocks = [pygame.image.load(block_name) for block_name in block_names]
+# blocks[i = 0 : 8]: i mines arround
+# blocks[9]: blank block
+# blocks[10]: mine, marked correctly
+# blocks[11]: mine, marked falsely
+# blocks[12]: mine, blow up
+# blocks[13]: flag
+# blocks[14]: wonder
+block_names = [os.path.join("resources", "images", str(x) + ".bmp") for x in xrange(15)]
+blocks = [pygame.image.load(block_name) for block_name in block_names]
 
-    number_block_names = [os.path.join("resources", "images", "d" + str(x) + ".bmp") for x in xrange(10)]
-    number_blocks = [pygame.image.load(number_block_name) for number_block_name in number_block_names]
+number_block_names = [os.path.join("resources", "images", "d" + str(x) + ".bmp") for x in xrange(10)]
+number_blocks = [pygame.image.load(number_block_name) for number_block_name in number_block_names]
 
-    currend_second = 0
-    last_second = currend_second
-    block_bitset = []
-    mines_count = 10
-    remain_blocks_count = 9 * 9
-    running = True
-    initBlockBitset()
+currend_second = 0
+last_second = currend_second
+block_bitset = []
+mines_count = 10
+remain_blocks_count = 9 * 9
+running = True
+initBlockBitset()
 
-    while running:
-        screen.fill(white_color)
-        drawFrame()
-        drawNumber(mines_count, currend_second)
-        drawContinueBlocks()
-        pygame.display.flip()
-        currend_second = pygame.time.get_ticks() / 1000
-        if currend_second != last_second:
-            last_second = currend_second
-        else:
-            currend_second = last_second
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit(0)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                right = pygame.mouse.get_pressed()[0]
-                left = pygame.mouse.get_pressed()[2]
-                position = pygame.mouse.get_pos()
-                if right:
-                    handleClick(position, True)
-                elif left:
-                    handleClick(position, False)
+while running:
+    screen.fill(white_color)
+    drawFrame()
+    drawNumber(mines_count, currend_second)
+    drawContinueBlocks()
+    pygame.display.flip()
+    currend_second = pygame.time.get_ticks() / 1000
+    if currend_second != last_second:
+        last_second = currend_second
+    else:
+        currend_second = last_second
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit(0)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            right = pygame.mouse.get_pressed()[0]
+            left = pygame.mouse.get_pressed()[2]
+            position = pygame.mouse.get_pos()
+            if right:
+                handleClick(position, True)
+            elif left:
+                handleClick(position, False)
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit(0)
-        pygame.display.flip()
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit(0)
+    pygame.display.flip()

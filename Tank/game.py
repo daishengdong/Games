@@ -59,7 +59,7 @@ def produce_enemy(time):
         for enemy in enemys:
             for point_e in enemy.area:
                 if point_e in enemy_init_area[index_e]:
-                    onflict = True
+                    conflict = True
                     break
             if conflict:
                 break;
