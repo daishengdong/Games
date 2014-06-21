@@ -106,16 +106,16 @@ class Block():
             score += 4
         elif eliminate_count == 4:
             score += 6
+        '''
+        attention: the code below does not work
+        index = 0
+        for fb in field_bricks:
+            if fb.y < y:
+                fb.y += 1
+            elif fb.y == y:
+                field_bricks.pop(index)
+            index += 1
             '''
-            attention: the code below does not work
-            index = 0
-            for fb in field_bricks:
-                if fb.y < y:
-                    fb.y += 1
-                elif fb.y == y:
-                    field_bricks.pop(index)
-                index += 1
-                '''
 
     def update(self, time):
         global last_move
