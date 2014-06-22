@@ -59,12 +59,10 @@ class Bird():
 
     def draw(self):
         rotate_image = pygame.transform.rotate(bird_img, self.angle)
-        '''
-        image_w, image_h = rotate_image.get_size()
-        draw_pos = rotate_image.get_rect().move(self.x - image_w / 2, self.y - image_h / 2)
-        '''
-        draw_pos = (self.x - rotate_image.get_rect().width / 2, self.y - rotate_image.get_rect().height / 2)
-        screen.blit(rotate_image, draw_pos) 
+        delta_width = (rotate_image.get_rect().width - bird_img.get_rect().width) / 2
+        delta_height = (rotate_image.get_rect().height - bird_img.get_rect().height) / 2
+        (draw_x, draw_y) = (self.x - delta_width, self.y - delta_height)
+        screen.blit(rotate_image, (draw_x, draw_y)) 
 
     def die(self, time_passed):
         global running
@@ -150,10 +148,9 @@ class Pipe():
         for a in self.appearance:
             screen.blit(a[2], (self.x + a[0], a[1])) 
 
-    def collode_with_bird(self):
+    def collide_with_bird(self):
         bird_rect = pygame.Rect(bird_img.get_rect())
-        bird_rect.left = bird.x
-        bird_rect.top = bird.y
+        bird_rect.topleft = (bird.x, bird.y)
         for a in self.appearance:
             pipe_rect = pygame.Rect(a[2].get_rect())
             pipe_rect.left = self.x + a[0]
@@ -182,6 +179,7 @@ while running:
     draw_text(score)
 
     time_passed = clock.tick() / 1000.0
+
     if game_over:
         for p in pipes:
             p.update(0)
@@ -206,7 +204,7 @@ while running:
     for p in pipes:
         if p.x + (head_width - body_width) / 2 + body_width <= 0:
             pipes.pop(index)
-        elif p.collode_with_bird():
+        elif p.collide_with_bird():
             # game over
             game_over = True
         index += 1
@@ -227,3 +225,4 @@ while True:
             pygame.quit()
             exit(0)
     pygame.display.flip()
+    pygame.display.update()
