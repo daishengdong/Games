@@ -173,6 +173,7 @@ def drawNumber(number, time):
 pygame.init()
 width, height = 164, 217 
 screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption('Minesweeper')
 white_color = pygame.Color(255, 255, 255)
 
 # blocks[i = 0 : 8]: i mines arround

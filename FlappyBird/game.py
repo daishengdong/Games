@@ -15,6 +15,7 @@ clock = pygame.time.Clock()
 width, height = 640, 480
 
 screen = pygame.display.set_mode((width, height), 0, 32)
+pygame.display.set_caption('FlappyBird')
 background_img = pygame.image.load("resources/images/background.png")
 gameover_img = pygame.image.load("resources/images/gameover.png")
 

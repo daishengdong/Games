@@ -248,6 +248,7 @@ last_move = -1
 
 pygame.init()
 screen = pygame.display.set_mode(((field_width + info_panel_width) * brick_width, field_height * brick_height), 0, 32)
+pygame.display.set_caption('Tetris')
 
 while running:
     if next_block == None:

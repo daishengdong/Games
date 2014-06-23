@@ -449,6 +449,7 @@ pygame.init()
 expand_battle_field()
 x_max, y_max = len(battle_field[0]), len(battle_field)
 screen = pygame.display.set_mode((x_max* 30, y_max * 30), 0, 32)
+pygame.display.set_caption('Battle City')
 
 symbol_area = None
 symbol_position = None

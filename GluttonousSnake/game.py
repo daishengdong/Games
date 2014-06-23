@@ -109,6 +109,7 @@ pygame.init()
 field_width, field_height = 30, 30
 cell_width, cell_height = 20, 20 
 screen = pygame.display.set_mode((field_width * cell_width, field_height * cell_height), 0, 32)
+pygame.display.set_caption('GluttonousSnake')
 
 colors_for_foods = (
         pygame.Color(255, 0, 0), pygame.Color(0, 0, 255),
