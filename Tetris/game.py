@@ -130,9 +130,7 @@ class Block():
                 self.stop()
 
     def rotate(self):
-        new_direction = self.direction + 1
-        if new_direction >= len(self.bricks_layout):
-            new_direction = 0
+        new_direction = (self.direction + 1) % len(self.bricks_layout)
         new_layout = self.bricks_layout[new_direction]
         if not self.isLegal(new_layout, self.position):
             return
