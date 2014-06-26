@@ -367,6 +367,7 @@ class EnemyMissile(Missile):
         Missile.__init__(self, direction, p_position, enemy_missile_img)
 
     def update(self):
+        global symbol_attacked
         if self.direction == 'U':
             self.position[1] -= self.speed
 
