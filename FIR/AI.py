@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import threading
+import operator
+import copy
 
 # for global use
 ret_x, ret_y = -1, -1
 computer_played = False
+
+def get_data():
+    return computer_played, ret_x, ret_y
 
 # 能成 5
 SCORE1 = 100000
@@ -34,25 +39,52 @@ INFINITE = 10000000
 # 搜索深度越深效率越低
 SEARCH_DEPTH = 3
 
+# 保存搜索节点的盘面情况和盘面大小
 this_bitset, this_count = None, 0
-computer_points, player_points = [], []
 
 def avaliable_position():
     global this_bitset
     for x in xrange(0, this_count + 1):
         for y in xrange(0, this_count + 1):
-            if this_bitset[x][y] == 0:
+            if this_bitset[x][y] == 'o':
                 yield x, y
 
-def get_layout((x, y), is_computer = True):
-    # 横
-    layout1 = [(x + i, y) for i in xrange(-4, 5)]
-    # 纵
-    layout2 = [(x, y + i) for i in xrange(-4, 5)]
+def get_layout(is_computer = True):
+    if is_computer:
+        # 横
+        # another cool: layout = map(lambda x: operator.concat(operator.concat('+', x), '+'), map(''.join, bitset))
+        layout = map(lambda x: '+' + x + '+', map(''.join, this_bitset))
+        # 纵
+        # map(''.join, zip(*bitset) 是 bitset 的转置
+        layout.extend(map(lambda x: '+' + x + '+', map(''.join, zip(*this_bitset))))
+    else:
+        layout = map(lambda x: '*' + x + '*', map(''.join, this_bitset))
+        layout.extend(map(lambda x: '*' + x + '*', map(''.join, zip(*this_bitset))))
     # 正斜 \
-    layout3 = [(x + i, y + i) for i in xrange(-4, 5)]
+    layout_point = []
+    for y in xrange(this_count + 1):
+        if this_count - y + 1 < 5:
+            # 去除拐角四个绝对连不成五子的线（长度最多只有 4）
+            continue
+        layout_point.append([(0 + i, y + i) for i in xrange(-1, this_count - y + 2)])
+
+    for x in xrange(1, this_count + 1):
+        if this_count - x + 1 < 5:
+            # 去除拐角四个绝对连不成五子的线（长度最多只有 4）
+            continue
+        layout_point.append([(x + i, 0 + i) for i in xrange(-1, this_count - x + 2)])
     # 反斜 /
-    layout4 = [(x - i, y + i) for i in xrange(-4, 5)]
+    for y in xrange(this_count + 1):
+        if y + 1 < 5:
+            # 去除拐角四个绝对连不成五子的线（长度最多只有 4）
+            continue
+        layout_point.append([(0 + i, y - i) for i in xrange(-1, y + 2)])
+
+    for x in xrange(1, this_count + 1):
+        if this_count - x + 1 < 5:
+            # 去除拐角四个绝对连不成五子的线（长度最多只有 4）
+            continue
+        layout_point.append([(x + i, this_count - i) for i in xrange(-1, this_count - x + 2)])
 
     # * 表示计算机的棋子(白棋)
     # + 表示玩家的棋子(黑棋)
@@ -62,17 +94,11 @@ def get_layout((x, y), is_computer = True):
     # 这是因为，对方的棋子和边界都是表示阻隔，没必要区分
     if is_computer:
         # 获取电脑的棋子布局情况
-        ret_layout1 = ''.join(map(lambda (x, y): '+' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout1))
-        ret_layout2 = ''.join(map(lambda (x, y): '+' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout2))
-        ret_layout3 = ''.join(map(lambda (x, y): '+' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout3))
-        ret_layout4 = ''.join(map(lambda (x, y): '+' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout4))
+        layout.extend(map(lambda points: ''.join(map(lambda (x, y): '+' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], points)), layout_point))
     else:
         # 获取玩家的棋子布局情况
-        ret_layout1 = ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout1))
-        ret_layout2 = ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout2))
-        ret_layout3 = ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout3))
-        ret_layout4 = ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], layout4))
-    return ret_layout1, ret_layout2, ret_layout3, ret_layout4
+        layout.extend(map(lambda points: ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], points)), layout_point))
+    return layout
 
 def get_credential(layout, is_computer = True):
     credential = [False for _ in xrange(7)]
@@ -126,302 +152,115 @@ def evalue():
     # 行、列、对角线上
     # 计算机得分 - 玩家得分
     score = 0
-    five_cnt, dead_four_cnt, alive_four_cnt = 0, 0, 0
-    dead_three_cnt, alive_three_cnt, dead_two_cnt, alive_two_cnt = 0, 0, 0, 0
-    layout1, layout2, layout3, layout4 = None, None, None, None
-    for (x, y) in computer_points:
-        layout1, layout2, layout3, layout4 = get_layout()
-        F_1, A4_1, D4_1, A3_1, D3_1, A2_1, D2_1 = get_credential(layout1)
-        F_2, A4_2, D4_2, A3_2, D3_2, A2_2, D2_2 = get_credential(layout2)
-        F_3, A4_3, D4_3, A3_3, D3_3, A2_3, D2_3 = get_credential(layout3)
-        F_4, A4_4, D4_4, A3_4, D3_4, A2_4, D2_4 = get_credential(layout4)
+    # 计算机的得分
+    credential_matrix = map(get_credential, get_layout())
+    # credential_matrix 的转置矩阵
+    tran_credential_matrix = zip(*credential_matrix)
+    # 0       1       2       3       4       5       6
+    # F_1     A4_1    D4_1    A3_1    D3_1    A2_1    D2_1
 
-        # 成 5
-        if F_1:
-            score += SCORE1
-        if F_2:
-            score += SCORE1
-        if F_3:
-            score += SCORE1
-        if F_4:
-            score += SCORE1
+    # 成 5
+    if reduce(operator.ior, tran_credential_matrix[0]):
+        score += SCORE1
 
-        # 活 4
-        if A4_1:
-            score += SCORE2
-        if A4_2:
-            score += SCORE2
-        if A4_3:
-            score += SCORE2
-        if A4_4:
-            score += SCORE2
+    # 活 4
+    if reduce(operator.ior, tran_credential_matrix[1]):
+        score += SCORE2
 
-        # 双死 4
-        if D4_1 and D4_2:
-            score += SCORE2
-        if D4_1 and D4_3:
-            score += SCORE2
-        if D4_1 and D4_4:
-            score += SCORE2
-        if D4_2 and D4_3:
-            score += SCORE2
-        if D4_2 and D4_4:
-            score += SCORE2
-        if D4_3 and D4_4:
-            score += SCORE2
+    # 双死 4
+    if tran_credential_matrix[2].count(True) >= 2:
+        score += SCORE2
 
-        # 死 4 活 3
-        if D4_1 and A3_2:
-            score += SCORE2
-        if D4_1 and A3_3:
-            score += SCORE2
-        if D4_1 and A3_4:
-            score += SCORE2
+    # 死 4 活 3
+    if reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3]):
+        score += SCORE2
 
-        if D4_2 and A3_1:
-            score += SCORE2
-        if D4_2 and A3_3:
-            score += SCORE2
-        if D4_2 and A3_4:
-            score += SCORE2
+    # 双活 3
+    if tran_credential_matrix[3].count(True) >= 2:
+        score += SCORE3
 
-        if D4_3 and A3_1:
-            score += SCORE2
-        if D4_3 and A3_2:
-            score += SCORE2
-        if D4_3 and A3_4:
-            score += SCORE2
+    # 死 3 活 3
+    if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
+        score += SCORE4
 
-        if D4_4 and A3_1:
-            score += SCORE2
-        if D4_4 and A3_2:
-            score += SCORE2
-        if D4_4 and A3_3:
-            score += SCORE2
+    # 单死 4
+    if tran_credential_matrix[2].count(True) == 1:
+        score += SCORE5
 
-        # 双活 3
-        if A3_1 and A3_2:
-            score += SCORE3
-        if A3_1 and A3_3:
-            score += SCORE3
-        if A3_1 and A3_4:
-            score += SCORE3
-        if A3_2 and A3_3:
-            score += SCORE3
-        if A3_2 and A3_4:
-            score += SCORE3
-        if A3_3 and A3_4:
-            score += SCORE3
+    # 单活 3
+    if tran_credential_matrix[3].count(True) == 1:
+        score += SCORE6
 
-        # 死 3 活 3
-        if D3_1 and A3_2:
-            score += SCORE4
-        if D3_1 and A3_3:
-            score += SCORE4
-        if D3_1 and A3_4:
-            score += SCORE4
+    # 双活 2
+    if tran_credential_matrix[5].count(True) >= 2:
+        score += SCORE7
 
-        if D3_2 and A3_1:
-            score += SCORE4
-        if D3_2 and A3_3:
-            score += SCORE4
-        if D3_2 and A3_4:
-            score += SCORE4
+    # 单死 3
+    if tran_credential_matrix[4].count(True) == 1:
+        score += SCORE8
 
-        if D3_3 and A3_1:
-            score += SCORE4
-        if D3_3 and A3_2:
-            score += SCORE4
-        if D3_3 and A3_4:
-            score += SCORE4
+    # 单活 2
+    if tran_credential_matrix[5].count(True) == 1:
+        score += SCORE9
 
-        if D3_4 and A3_1:
-            score += SCORE4
-        if D3_4 and A3_2:
-            score += SCORE4
-        if D3_4 and A3_3:
-            score += SCORE4
+    # 单死 2
+    if tran_credential_matrix[6].count(True) == 1:
+        score += SCORE10
 
-        # 单死 4
-        if [D4_1, D4_2, D4_3, D4_4].count(True) == 1:
-            score += SCORE5
+    # 玩家的得分
+    credential_matrix = map(lambda x: get_credential(x, False), get_layout(False))
+    # credential_matrix 的转置矩阵
+    tran_credential_matrix = zip(*credential_matrix)
 
-        # 单活 3
-        if [A3_1, A3_2, A3_3, A3_4].count(True) == 1:
-            score += SCORE6
+    # 成 5
+    if reduce(operator.ior, tran_credential_matrix[0]):
+        score -= SCORE1
 
-        # 双活 2
-        if A2_1 and A2_2:
-            score += SCORE7
-        if A2_1 and A2_3:
-            score += SCORE7
-        if A2_1 and A2_4:
-            score += SCORE7
-        if A2_2 and A2_3:
-            score += SCORE7
-        if A2_2 and A2_4:
-            score += SCORE7
-        if A2_3 and A2_4:
-            score += SCORE7
+    # 活 4
+    if reduce(operator.ior, tran_credential_matrix[1]):
+        score -= SCORE2
 
-        # 单死 3
-        if [D3_1, D3_2, D3_3, D3_4].count(True) == 1:
-            score += SCORE8
+    # 双死 4
+    if tran_credential_matrix[2].count(True) >= 2:
+        score -= SCORE2
 
-        # 单活 2
-        if [A2_1, A2_2, A2_3, A2_4].count(True) == 1:
-            score += SCORE9
+    # 死 4 活 3
+    if reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3]):
+        score -= SCORE2
 
-        # 单死 2
-        if [D2_1, D2_2, D2_3, D2_4].count(True) == 1:
-            score += SCORE10
+    # 双活 3
+    if tran_credential_matrix[3].count(True) >= 2:
+        score -= SCORE3
 
-    for (x, y) in player_points:
-        layout1, layout2, layout3, layout4 = get_layout(False)
-        F_1, A4_1, D4_1, A3_1, D3_1, A2_1, D2_1 = get_credential(layout1, False)
-        F_2, A4_2, D4_2, A3_2, D3_2, A2_2, D2_2 = get_credential(layout2, False)
-        F_3, A4_3, D4_3, A3_3, D3_3, A2_3, D2_3 = get_credential(layout3, False)
-        F_4, A4_4, D4_4, A3_4, D3_4, A2_4, D2_4 = get_credential(layout4, False)
+    # 死 3 活 3
+    if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
+        score -= SCORE4
 
-        # 成 5
-        if F_1:
-            score -= SCORE1
-        if F_2:
-            score -= SCORE1
-        if F_3:
-            score -= SCORE1
-        if F_4:
-            score -= SCORE1
+    # 单死 4
+    if tran_credential_matrix[2].count(True) == 1:
+        score -= SCORE5
 
-        # 活 4
-        if A4_1:
-            score -= SCORE2
-        if A4_2:
-            score -= SCORE2
-        if A4_3:
-            score -= SCORE2
-        if A4_4:
-            score -= SCORE2
+    # 单活 3
+    if tran_credential_matrix[3].count(True) == 1:
+        score -= SCORE6
 
-        # 双死 4
-        if D4_1 and D4_2:
-            score -= SCORE2
-        if D4_1 and D4_3:
-            score -= SCORE2
-        if D4_1 and D4_4:
-            score -= SCORE2
-        if D4_2 and D4_3:
-            score -= SCORE2
-        if D4_2 and D4_4:
-            score -= SCORE2
-        if D4_3 and D4_4:
-            score -= SCORE2
+    # 双活 2
+    if tran_credential_matrix[5].count(True) >= 2:
+        score -= SCORE7
 
-        # 死 4 活 3
-        if D4_1 and A3_2:
-            score -= SCORE2
-        if D4_1 and A3_3:
-            score -= SCORE2
-        if D4_1 and A3_4:
-            score -= SCORE2
+    # 单死 3
+    if tran_credential_matrix[4].count(True) == 1:
+        score -= SCORE8
 
-        if D4_2 and A3_1:
-            score -= SCORE2
-        if D4_2 and A3_3:
-            score -= SCORE2
-        if D4_2 and A3_4:
-            score -= SCORE2
+    # 单活 2
+    if tran_credential_matrix[5].count(True) == 1:
+        score -= SCORE9
 
-        if D4_3 and A3_1:
-            score -= SCORE2
-        if D4_3 and A3_2:
-            score -= SCORE2
-        if D4_3 and A3_4:
-            score -= SCORE2
+    # 单死 2
+    if tran_credential_matrix[6].count(True) == 1:
+        score -= SCORE10
 
-        if D4_4 and A3_1:
-            score -= SCORE2
-        if D4_4 and A3_2:
-            score -= SCORE2
-        if D4_4 and A3_3:
-            score -= SCORE2
-
-        # 双活 3
-        if A3_1 and A3_2:
-            score -= SCORE3
-        if A3_1 and A3_3:
-            score -= SCORE3
-        if A3_1 and A3_4:
-            score -= SCORE3
-        if A3_2 and A3_3:
-            score -= SCORE3
-        if A3_2 and A3_4:
-            score -= SCORE3
-        if A3_3 and A3_4:
-            score -= SCORE3
-
-        # 死 3 活 3
-        if D3_1 and A3_2:
-            score -= SCORE4
-        if D3_1 and A3_3:
-            score -= SCORE4
-        if D3_1 and A3_4:
-            score -= SCORE4
-
-        if D3_2 and A3_1:
-            score -= SCORE4
-        if D3_2 and A3_3:
-            score -= SCORE4
-        if D3_2 and A3_4:
-            score -= SCORE4
-
-        if D3_3 and A3_1:
-            score -= SCORE4
-        if D3_3 and A3_2:
-            score -= SCORE4
-        if D3_3 and A3_4:
-            score -= SCORE4
-
-        if D3_4 and A3_1:
-            score -= SCORE4
-        if D3_4 and A3_2:
-            score -= SCORE4
-        if D3_4 and A3_3:
-            score -= SCORE4
-
-        # 单死 4
-        if [D4_1, D4_2, D4_3, D4_4].count(True) == 1:
-            score -= SCORE5
-
-        # 单活 3
-        if [A3_1, A3_2, A3_3, A3_4].count(True) == 1:
-            score -= SCORE6
-
-        # 双活 2
-        if A2_1 and A2_2:
-            score -= SCORE7
-        if A2_1 and A2_3:
-            score -= SCORE7
-        if A2_1 and A2_4:
-            score -= SCORE7
-        if A2_2 and A2_3:
-            score -= SCORE7
-        if A2_2 and A2_4:
-            score -= SCORE7
-        if A2_3 and A2_4:
-            score -= SCORE7
-
-        # 单死 3
-        if [D3_1, D3_2, D3_3, D3_4].count(True) == 1:
-            score -= SCORE8
-
-        # 单活 2
-        if [A2_1, A2_2, A2_3, A2_4].count(True) == 1:
-            score -= SCORE9
-
-        # 单死 2
-        if [D2_1, D2_2, D2_3, D2_4].count(True) == 1:
-            score -= SCORE10
+    # now, life is better...
     return score
 
 # alpha 表示电脑目前能达到的最大分数, alpha 要求越大越好
@@ -433,13 +272,11 @@ def Max(alpha, beta, depth):
         return evalue()
     for x, y in avaliable_position():
         # 尝试在 (x, y) 处下白子
-        this_bitset[x][y] = 1
-        computer_points.append((x, y))
+        this_bitset[x][y] = '*'
         # alpha = max(alpha, Min(alpha, beta, depth + 1))
         val = Min(alpha, beta, depth + 1)
         # 撤销
-        this_bitset[x][y] = 0
-        computer_points.remove((x, y))
+        this_bitset[x][y] = 'o'
 
         # 当前层需要求的是极大值
         if val >= alpha:
@@ -458,13 +295,11 @@ def Min(alpha, beta, depth):
         return evalue()
     for x, y in avaliable_position():
         # 尝试在 (x, y) 处下黑子
-        this_bitset[x][y] = 2
-        player_points.append((x, y))
+        this_bitset[x][y] = '+'
         # beta = min(beta, Max(alpha, beta, depth + 1))
         val = Max(alpha, beta, depth + 1)
         # 撤销
-        this_bitset[x][y] = 0
-        player_points.remove((x, y))
+        this_bitset[x][y] = 'o'
 
         # 当前层需要求的是极小值
         if val <= beta:
@@ -478,11 +313,12 @@ class searchThread(threading.Thread):
     def __init__(self, bitset, count):
         threading.Thread.__init__(self)  
         global this_bitset, this_count
-        this_bitset, this_count = bitset, count
+        this_bitset = copy.deepcopy(bitset)
+        this_count = count
           
     def run(self):  
         global computer_played
         computer_played = False
         alpha, beta = -INFINITE, INFINITE
-        Max(alpha, beta, 1)
+        Max(alpha, beta, 0)
         computer_played = True

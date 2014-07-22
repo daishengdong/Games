@@ -3,7 +3,7 @@ import pygame
 from pygame.locals import *
 import random
 
-from AI import searchThread, ret_x, ret_y, computer_played
+from AI import searchThread, get_data
 
 def drawFrame():
     frame_color = pygame.Color(200, 200, 200)
@@ -53,6 +53,7 @@ white_color = pygame.Color(255, 255, 255)
 black_color = pygame.Color(0, 0, 0)
 
 running = True
+first_step = True
 
 turn = 'player'
 
@@ -61,12 +62,19 @@ while running:
     drawFrame()
     drawChessBoard()
 
-    global computer_played
-    if turn == 'computer' and computer_played:
-        turn = 'player'
-        print 'ok'
-        bitset[ret_x][ret_y] = '*'
-        print ret_x, ret_y
+    if turn == 'computer':
+        if first_step:
+            first_step = False
+            for x, y in ((6, 6), (6, 5), (5, 6), (5, 5)):
+                if bitset[x][y] == 'o':
+                    turn = 'player'
+                    bitset[x][y] = '*'
+                    break
+        else:
+            computer_played, ret_x, ret_y = get_data()
+            if computer_played:
+                turn = 'player'
+                bitset[ret_x][ret_y] = '*'
 
     pygame.display.flip()
     pygame.display.update()
