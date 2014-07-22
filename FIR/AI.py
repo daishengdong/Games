@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import threading
 import operator
 import copy
@@ -37,11 +38,12 @@ INFINITE = 10000000
 # 博弈树的搜索深度
 # 决定了 AI 的智能程度
 # 搜索深度越深效率越低
-SEARCH_DEPTH = 3
+SEARCH_DEPTH = 2
 
 # 保存搜索节点的盘面情况和盘面大小
 this_bitset, this_count = None, 0
 
+# 空闲的位置
 def avaliable_position():
     global this_bitset
     for x in xrange(0, this_count + 1):
@@ -49,6 +51,7 @@ def avaliable_position():
             if this_bitset[x][y] == 'o':
                 yield x, y
 
+# 获取当前盘面 横、纵、正斜、反斜 四个棋路上棋子的布局
 def get_layout(is_computer = True):
     if is_computer:
         # 横
@@ -100,6 +103,7 @@ def get_layout(is_computer = True):
         layout.extend(map(lambda points: ''.join(map(lambda (x, y): '*' if x < 0 or x > this_count or y < 0 or y > this_count else this_bitset[x][y], points)), layout_point))
     return layout
 
+# 某一条棋路布局的情况
 def get_credential(layout, is_computer = True):
     credential = [False for _ in xrange(7)]
     if is_computer:
@@ -148,6 +152,7 @@ def get_credential(layout, is_computer = True):
             credential[6] = True
     return credential
 
+# 对当前盘面评分
 def evalue():
     # 行、列、对角线上
     # 计算机得分 - 玩家得分
@@ -279,7 +284,7 @@ def Max(alpha, beta, depth):
         this_bitset[x][y] = 'o'
 
         # 当前层需要求的是极大值
-        if val >= alpha:
+        if val > alpha:
             # 找到一个极大值
             global ret_x, ret_y
             ret_x, ret_y = x, y
@@ -292,6 +297,7 @@ def Max(alpha, beta, depth):
 def Min(alpha, beta, depth):
     # 假设人的试探，求极小子节点
     if depth == SEARCH_DEPTH:
+        a = evalue()
         return evalue()
     for x, y in avaliable_position():
         # 尝试在 (x, y) 处下黑子
@@ -302,7 +308,7 @@ def Min(alpha, beta, depth):
         this_bitset[x][y] = 'o'
 
         # 当前层需要求的是极小值
-        if val <= beta:
+        if val < beta:
             beta = val
         # alpha 剪枝
         if val <= alpha:
