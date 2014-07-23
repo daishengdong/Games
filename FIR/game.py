@@ -86,7 +86,7 @@ def is_game_over((x, y), is_computer=True):
 pygame.init()
 fpsClock = pygame.time.Clock()
 
-width, count = 60, 7
+width, count = 60, 10
 w1, w2 = 5, width / 2
 bitset = [['o' for _ in xrange(count + 1)] for _ in xrange(count + 1)]
 screen = pygame.display.set_mode((2 * w1 + 2 * w2 + count * width, 2 * w1 + 2 * w2 + count * width))
