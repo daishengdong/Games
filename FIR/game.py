@@ -120,6 +120,7 @@ while running:
                 bitset[ret_x][ret_y] = '*'
                 running = not is_game_over((ret_x, ret_y))
                 turn = 'player'
+                pygame.mouse.set_visible(True)
 
     pygame.display.flip()
     pygame.display.update()
@@ -133,12 +134,12 @@ while running:
             left = pygame.mouse.get_pressed()[0]
             right = pygame.mouse.get_pressed()[2]
             position = pygame.mouse.get_pos()
-            if left:
-                if turn == 'player':
-                    turn = 'computer'
-                    handleClick(position)
-                    if not first_step:
-                        searchThread(bitset, count).start()
+            if left and turn == 'player':
+                turn = 'computer'
+                handleClick(position)
+                if not first_step:
+                    searchThread(bitset, count).start()
+                    pygame.mouse.set_visible(False)
 
 while True:
     screen.fill(back_color)
