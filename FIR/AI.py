@@ -164,106 +164,120 @@ def evalue():
     # 0       1       2       3       4       5       6
     # F_1     A4_1    D4_1    A3_1    D3_1    A2_1    D2_1
 
-    # 成 5
-    if reduce(operator.ior, tran_credential_matrix[0]):
-        score += SCORE1
+    while True:
+        # 成 5
+        if reduce(operator.ior, tran_credential_matrix[0]):
+            score += SCORE1
+            break
 
-    # 活 4
-    if reduce(operator.ior, tran_credential_matrix[1]):
-        score += SCORE2
+        # 活 4、双死 4、死 4 活 3
+        if reduce(operator.ior, tran_credential_matrix[1]) \
+                or tran_credential_matrix[2].count(True) >= 2 \
+                or (reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3])):
+            score += SCORE2
+            break
 
-    # 双死 4
-    if tran_credential_matrix[2].count(True) >= 2:
-        score += SCORE2
+        # 双活 3
+        if tran_credential_matrix[3].count(True) >= 2:
+            score += SCORE3
+            break
 
-    # 死 4 活 3
-    if reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3]):
-        score += SCORE2
+        # 死 3 活 3
+        if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
+            score += SCORE4
+            break
 
-    # 双活 3
-    if tran_credential_matrix[3].count(True) >= 2:
-        score += SCORE3
+        # 单死 4
+        if tran_credential_matrix[2].count(True) == 1:
+            score += SCORE5
+            break
 
-    # 死 3 活 3
-    if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
-        score += SCORE4
+        # 单活 3
+        if tran_credential_matrix[3].count(True) == 1:
+            score += SCORE6
+            break
 
-    # 单死 4
-    if tran_credential_matrix[2].count(True) == 1:
-        score += SCORE5
+        # 双活 2
+        if tran_credential_matrix[5].count(True) >= 2:
+            score += SCORE7
+            break
 
-    # 单活 3
-    if tran_credential_matrix[3].count(True) == 1:
-        score += SCORE6
+        # 单死 3
+        if tran_credential_matrix[4].count(True) == 1:
+            score += SCORE8
+            break
 
-    # 双活 2
-    if tran_credential_matrix[5].count(True) >= 2:
-        score += SCORE7
+        # 单活 2
+        if tran_credential_matrix[5].count(True) == 1:
+            score += SCORE9
+            break
 
-    # 单死 3
-    if tran_credential_matrix[4].count(True) == 1:
-        score += SCORE8
+        # 单死 2
+        if tran_credential_matrix[6].count(True) == 1:
+            score += SCORE10
+            break
 
-    # 单活 2
-    if tran_credential_matrix[5].count(True) == 1:
-        score += SCORE9
-
-    # 单死 2
-    if tran_credential_matrix[6].count(True) == 1:
-        score += SCORE10
+        break
 
     # 玩家的得分
     credential_matrix = map(lambda x: get_credential(x, False), get_layout(False))
     # credential_matrix 的转置矩阵
     tran_credential_matrix = zip(*credential_matrix)
 
-    # 成 5
-    if reduce(operator.ior, tran_credential_matrix[0]):
-        score -= SCORE1
+    while True:
+        # 成 5
+        if reduce(operator.ior, tran_credential_matrix[0]):
+            score -= SCORE1
+            break
 
-    # 活 4
-    if reduce(operator.ior, tran_credential_matrix[1]):
-        score -= SCORE2
+        # 活 4、双死 4、死 4 活 3
+        if reduce(operator.ior, tran_credential_matrix[1]) \
+                or tran_credential_matrix[2].count(True) >= 2 \
+                or (reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3])):
+            score -= SCORE2
+            break
 
-    # 双死 4
-    if tran_credential_matrix[2].count(True) >= 2:
-        score -= SCORE2
+        # 双活 3
+        if tran_credential_matrix[3].count(True) >= 2:
+            score -= SCORE3
+            break
 
-    # 死 4 活 3
-    if reduce(operator.ior, tran_credential_matrix[2]) and reduce(operator.ior, tran_credential_matrix[3]):
-        score -= SCORE2
+        # 死 3 活 3
+        if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
+            score -= SCORE4
+            break
 
-    # 双活 3
-    if tran_credential_matrix[3].count(True) >= 2:
-        score -= SCORE3
+        # 单死 4
+        if tran_credential_matrix[2].count(True) == 1:
+            score -= SCORE5
+            break
 
-    # 死 3 活 3
-    if reduce(operator.ior, tran_credential_matrix[3]) and reduce(operator.ior, tran_credential_matrix[4]):
-        score -= SCORE4
+        # 单活 3
+        if tran_credential_matrix[3].count(True) == 1:
+            score -= SCORE6
+            break
 
-    # 单死 4
-    if tran_credential_matrix[2].count(True) == 1:
-        score -= SCORE5
+        # 双活 2
+        if tran_credential_matrix[5].count(True) >= 2:
+            score -= SCORE7
+            break
 
-    # 单活 3
-    if tran_credential_matrix[3].count(True) == 1:
-        score -= SCORE6
+        # 单死 3
+        if tran_credential_matrix[4].count(True) == 1:
+            score -= SCORE8
+            break
 
-    # 双活 2
-    if tran_credential_matrix[5].count(True) >= 2:
-        score -= SCORE7
+        # 单活 2
+        if tran_credential_matrix[5].count(True) == 1:
+            score -= SCORE9
+            break
 
-    # 单死 3
-    if tran_credential_matrix[4].count(True) == 1:
-        score -= SCORE8
+        # 单死 2
+        if tran_credential_matrix[6].count(True) == 1:
+            score -= SCORE10
+            break
 
-    # 单活 2
-    if tran_credential_matrix[5].count(True) == 1:
-        score -= SCORE9
-
-    # 单死 2
-    if tran_credential_matrix[6].count(True) == 1:
-        score -= SCORE10
+        break
 
     # now, life is better...
     return score
